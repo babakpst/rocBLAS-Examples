@@ -30,10 +30,21 @@ THE SOFTWARE.
 
 int main(int argc, char** argv)
 {
-
-    helpers::ArgParser options("nxy");
+    printf(" This is Babak speaking:  \n");
+    
+    
+    // n size of vector A and B (basically no of elements that we want to swap), incx and incy, are the increments were the substitution happens.
+    // after swap, the size of A is n/incx, and size B is n/incy!
+    helpers::ArgParser options("nxy"); // bbk this argument indicates the admissible flags for this func.
+                                       // bbk or we can define them through the second argument !
+    //const std::vector<std::string> params{"n","50","x","5","y","5"};
+    //const std::vector<std::string> params{"n","x","y"};
+    //helpers::ArgParser options("",params);
+    printf(" no. of args: %d \n", argc);
     if(!options.validArgs(argc, argv))
+    {
         return EXIT_FAILURE;
+    }
 
     hipError_t     herror  = hipSuccess;
     rocblas_status rstatus = rocblas_status_success;
@@ -53,9 +64,13 @@ int main(int argc, char** argv)
     helpers::fillVectorNormRand(hostVecB, incy);
 
     // print input
-    std::cout << "Input Vectors" << std::endl;
-    helpers::printVector(hostVecA, n, incx);
-    helpers::printVector(hostVecB, n, incy);
+    std::cout << "Input Vectors: orig" << std::endl;
+    helpers::printVector(hostVecA, n, 1);
+    helpers::printVector(hostVecB, n, 1);
+
+    //std::cout << "Input Vectors" << std::endl;
+    //helpers::printVector(hostVecA, n, incx);
+    //helpers::printVector(hostVecB, n, incy);
 
     size_t vectorBytes = nSize * sizeof(float);
 
@@ -99,9 +114,13 @@ int main(int argc, char** argv)
     CHECK_ROCBLAS_STATUS(rstatus);
 
     // print results
-    std::cout << "Output Vectors" << std::endl;
-    helpers::printVector(hostVecA, n, incx);
-    helpers::printVector(hostVecB, n, incy);
+    //std::cout << "Output Vectors" << std::endl;
+    //helpers::printVector(hostVecA, n, incx);
+    //helpers::printVector(hostVecB, n, incy);
+
+    std::cout << "Output Vectors: orig" << std::endl;
+    helpers::printVector(hostVecA, n, 1);
+    helpers::printVector(hostVecB, n, 1);
 
     // release device memory
     herror = hipFree(deviceVecA);

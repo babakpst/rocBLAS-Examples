@@ -30,6 +30,14 @@ THE SOFTWARE.
 
 int main(int argc, char** argv)
 {
+    std::cout << " This is Babak \n";
+    /*
+    y := alpha*A*x    + beta*y,   or // rocblas_operation_none
+    y := alpha*A**T*x + beta*y,   or // rocblas_operation_transpose
+    y := alpha*A**H*x + beta*y,
+    */
+    
+
     helpers::ArgParser options("MNabxy");
     if(!options.validArgs(argc, argv))
         return EXIT_FAILURE;
@@ -46,7 +54,7 @@ int main(int argc, char** argv)
     float hAlpha = options.alpha;
     float hBeta  = options.beta;
 
-    const rocblas_operation transA = rocblas_operation_none;
+    const rocblas_operation transA = rocblas_operation_none; 
 
     size_t sizeX, dimX, absIncx;
     size_t sizeY, dimY, absIncy;
@@ -61,12 +69,13 @@ int main(int argc, char** argv)
         dimX = M;
         dimY = N;
     }
-    rocblas_int lda   = M;
-    size_t      sizeA = lda * size_t(N);
+    rocblas_int lda   = M; // number of columns is always M.
+    size_t      sizeA = lda * size_t(N); // the size of the input matrix is always M*N.
 
     absIncx = incx >= 0 ? incx : -incx;
     absIncy = incy >= 0 ? incy : -incy;
 
+    // The increment only applies to the vectors
     sizeX = dimX * absIncx;
     sizeY = dimY * absIncy;
 
@@ -84,6 +93,12 @@ int main(int argc, char** argv)
     // print input
     std::cout << "Input Vectors (X)" << std::endl;
     helpers::printVector(hX);
+
+    std::cout << "Input Vectors (Y)" << std::endl;
+    helpers::printVector(hY);
+
+    const char * name =   "initialized matrix";
+    helpers::printMatrix(name, hA.data(), M,N,lda); // bbk
 
     // using rocblas API
     rocblas_handle handle;
@@ -118,6 +133,7 @@ int main(int argc, char** argv)
         CHECK_ROCBLAS_STATUS(rstatus);
 
         // asynchronous calculation on device, returns before finished calculations
+        // s: single precision, d: double precision, c: complex.
         rstatus = rocblas_sgemv(handle, transA, M, N, &hAlpha, dA, lda, dX, incx, &hBeta, dY, incy);
 
         // check that calculation was launched correctly on device, not that result
@@ -131,7 +147,8 @@ int main(int argc, char** argv)
 
     } // release device memory via helpers::DeviceVector destructors
 
-    std::cout << "M, N, lda = " << M << ", " << N << ", " << lda << std::endl;
+    std::cout << "M, N, lda, alpha, beta, x, y = " << M << ", " << N << ", " << lda << ", " << hAlpha << ", " << 
+              hBeta << ", " << absIncx << ", " << absIncy << ", " <<std::endl;
 
     // print input
     std::cout << "Output Vector Y = alpha*Identity*X(random,...) + beta*Y(1,1,...)" << std::endl;

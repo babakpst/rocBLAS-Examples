@@ -28,6 +28,8 @@ THE SOFTWARE.
 #include <stdlib.h>
 #include <vector>
 
+// bbk the size of the vector is the same after the scale operation, it scales the elements by alpha for each increment.
+
 int main(int argc, char** argv)
 {
 
@@ -66,11 +68,14 @@ int main(int argc, char** argv)
     rstatus = rocblas_create_handle(&handle);
     CHECK_ROCBLAS_STATUS(rstatus);
 
+    // =======================================
+    // bbk this is on the host, but we need to pass it to the device. Still wokring fine w/o pointer mode.
     double alpha = options.alpha;
 
     // enable passing alpha parameter from pointer to host memory
-    rstatus = rocblas_set_pointer_mode(handle, rocblas_pointer_mode_host);
-    CHECK_ROCBLAS_STATUS(rstatus);
+    //rstatus = rocblas_set_pointer_mode(handle, rocblas_pointer_mode_host);
+    //CHECK_ROCBLAS_STATUS(rstatus);
+    // =======================================
 
     // asynchronous calculation on device, returns before finished calculations
     rstatus = rocblas_dscal(handle, n, &alpha, deviceVecA, incx);

@@ -28,8 +28,30 @@ THE SOFTWARE.
 #include <stdlib.h>
 #include <vector>
 
+/* bbk comments: (lda = leading dimension of matrix A)
+if transA == false -> we define sizeA = M*K, lda = M, Sa1=1,   Sa2 = lda
+if transA == true  -> we define sizeA = K*M, lda = K, Sa1=lda, Sa2 = 1
+
+if transB == false -> we define sizeB = K*N, ldb = K, Sb1=1,   Sb2 = lda
+if transB == true  -> we define sizeB = N*K, ldb = N, Sb1=lda, Sb2 = 1
+
+
+
+Then, the sizeC (or op(A)*op(B)) would be:
+if (transA == false) && (transB == false) sizeC [(M*K)(K*N)]     = M*N
+if (transA == false) && (transB == true)  sizeC [(M*K)(N*K)^T]   = M*N
+if (transA == true) && (transB == false)  sizeC [(K*M)^T(K*N)]   = M*N
+if (transA == true) && (transB == true)   sizeC [(K*M)^T(N*K)^T] = M*N
+
+Thus:
+ldc = M.
+
+*/
+
 int main(int argc, char** argv)
 {
+    std::cout << " This is Babak: \n";
+    //C = alpha*op( A )*op( B ) + beta*C,
     helpers::ArgParser options("MNKab");
     if(!options.validArgs(argc, argv))
         return EXIT_FAILURE;
@@ -45,8 +67,12 @@ int main(int argc, char** argv)
     float hAlpha = options.alpha;
     float hBeta  = options.beta;
 
-    const rocblas_operation transA = rocblas_operation_none;
+    //const rocblas_operation transA = rocblas_operation_none;
+    const rocblas_operation transA = rocblas_operation_transpose;
+
     const rocblas_operation transB = rocblas_operation_none;
+    //const rocblas_operation transB = rocblas_operation_transpose;
+
 
     rocblas_int lda, ldb, ldc, sizeA, sizeB, sizeC;
     int         strideA1, strideA2, strideB1, strideB2;
@@ -65,6 +91,9 @@ int main(int argc, char** argv)
         strideA1 = lda;
         strideA2 = 1;
     }
+    std::cout << " lda: " << lda << std::endl;
+    int NRA = lda,  NCA = sizeA/lda;
+
     if(transB == rocblas_operation_none)
     {
         ldb      = K;
@@ -79,8 +108,13 @@ int main(int argc, char** argv)
         strideB1 = ldb;
         strideB2 = 1;
     }
+    std::cout << " ldb: " << ldb << std::endl;
+    int NRB = ldb,  NCB = sizeB/ldb;
+
     ldc   = M;
     sizeC = N * ldc;
+
+    std::cout << " ldc: " << ldc << std::endl;
 
     // using rocblas API
     rocblas_handle handle;
@@ -89,7 +123,8 @@ int main(int argc, char** argv)
 
     // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
 
-    std::vector<dataType> hA(sizeA, 1);
+    std::vector<dataType> hA(sizeA, 2);
+    //std::vector<dataType> hB(sizeB,1);
     std::vector<dataType> hB(sizeB);
     std::vector<dataType> hC(sizeC, 1);
     std::vector<dataType> hGold(sizeC);
@@ -97,6 +132,14 @@ int main(int argc, char** argv)
     // helpers::matIdentity(hA.data(), M, K, lda);
     helpers::matIdentity(hB.data(), K, N, ldb);
     // helpers::matIdentity(hC.data(), M, N, ldc);
+
+    const char * name =   " matrix A ";
+    helpers::printMatrix(name, hA.data(), NRA, NCA,lda); // bbk
+    name =   " matrix B ";
+    helpers::printMatrix(name, hB.data(), NRB, NCB,ldb); // bbk
+    name =   " matrix C ";
+    helpers::printMatrix(name, hC.data(), M,N,ldc); // bbk
+
     hGold = hC;
 
     {
@@ -136,10 +179,15 @@ int main(int argc, char** argv)
 
     } // release device memory via helpers::DeviceVector destructors
 
-    std::cout << "M, N, K, lda, ldb, ldc = " << M << ", " << N << ", " << K << ", " << lda << ", "
-              << ldb << ", " << ldc << std::endl;
+    std::cout << "M, N, K, lda, ldb, ldc, alpha, beta = " << M << ", " << N << ", " << K << ", " << lda << ", "
+              << ldb << ", " << ldc << ", " << hAlpha << ", " << hBeta << ", " << std::endl;
+
+    name =   " Answer ";
+    helpers::printMatrix(name, hC.data(), M,N,ldc); // bbk
+
 
     // calculate gold standard using CPU
+    // bbk the effects of transposition is considered through the strids argumantes.
     helpers::matMatMult<dataType>(hAlpha,
                                   hBeta,
                                   M,

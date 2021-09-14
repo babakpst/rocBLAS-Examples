@@ -30,6 +30,8 @@ THE SOFTWARE.
 
 int main(int argc, char** argv)
 {
+    std::cout << " Babak is speaking: \n";
+    
     helpers::ArgParser options("xyn");
     if(!options.validArgs(argc, argv))
         return EXIT_FAILURE;
@@ -93,6 +95,7 @@ int main(int argc, char** argv)
 
     {
         //Allocating memory for the device vectors X, Y and the scalar Result
+        // bbk excellent example that shows how to check whether the memory has been corrupted.
         helpers::DeviceVector<float> dX(sizeX);
         helpers::DeviceVector<float> dY(sizeY);
 

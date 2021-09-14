@@ -32,6 +32,9 @@ THE SOFTWARE.
 
 int main(int argc, char** argv)
 {
+
+    std::cout << " This is Babak: \n ";
+    // A := A + alpha*x*x**H
     helpers::ArgParser options("Nax");
     if(!options.validArgs(argc, argv))
         return EXIT_FAILURE;
@@ -44,30 +47,37 @@ int main(int argc, char** argv)
     float hAlpha = options.alpha;
 
     const rocblas_fill uplo = rocblas_fill_upper;
+    //const rocblas_fill uplo = rocblas_fill_lower;
+    //const rocblas_fill uplo = rocblas_fill_full; // bbk this is not supported by rocblas_cher.
 
     size_t sizeX, absIncx;
 
     rocblas_int lda   = N;
-    size_t      sizeA = lda * size_t(N);
+    size_t      sizeA = lda * size_t(N); // bbk size of the input/output matrix (Hermited matrix)
 
     absIncx = incx >= 0 ? incx : -incx;
 
-    sizeX = N * absIncx;
+    sizeX = N * absIncx; // bbk size of the input vector.
 
     // Naming: dK is in GPU (device) memory. hK is in CPU (host) memory
 
-    std::vector<hipFloatComplex> hA(sizeA);
+    std::vector<hipFloatComplex> hA(sizeA); // bbkQ this is a host Vector, why is the type in hip? bcs this hip type is exactly equal to std::complex<float>
 
     // we are using std::complex for it's operators and it has same memory layout
     // as hipFloatComplex so can copy the data into the array for use in the rocblas C API
-    std::vector<std::complex<float>> hX(sizeX);
-    helpers::fillVectorUniformIntRand(hX);
+    std::vector<std::complex<float>> hX(sizeX); // bbk input of size N
+    
+    helpers::fillVectorUniformIntRand(hX); // bbk why a vector and not a matrix?
+
+    helpers::printVector(hX); // bbk: input vector
 
     std::vector<hipFloatComplex> hAGold(sizeA);
 
     // initialize simple data for simple host side reference computation
     helpers::matIdentity(hA.data(), N, N, lda);
     hAGold = hA;
+    const char * name =   "initialized matrix";
+    helpers::printMatrix(name, hA.data(), N,N,lda); // bbk
 
     // using rocblas API
     rocblas_handle handle;
@@ -100,7 +110,8 @@ int main(int argc, char** argv)
         // enable passing alpha and beta parameters from pointer to host memory
         rstatus = rocblas_set_pointer_mode(handle, rocblas_pointer_mode_host);
         CHECK_ROCBLAS_STATUS(rstatus);
-
+        
+        //A := A + alpha*x*x**H
         // asynchronous calculation on device, returns before finished calculations
         rstatus = rocblas_cher(handle, uplo, N, &hAlpha, dX, incx, dA, lda);
 
@@ -113,6 +124,9 @@ int main(int argc, char** argv)
             hipMemcpy(hA.data(), dA, sizeof(hipFloatComplex) * sizeA, hipMemcpyDeviceToHost));
 
         gpuTimer.stop();
+
+        name =   "after hermitian ";
+        helpers::printMatrix(name, hA.data(), N,N,lda); // bbk
 
     } // release device memory via helpers::DeviceVector destructors
 
@@ -150,11 +164,11 @@ int main(int argc, char** argv)
 
     if(fail)
     {
-        std::cout << "FAIL";
+        std::cout << "FAIL\n";
     }
     else
     {
-        std::cout << "PASS";
+        std::cout << "PASS\n";
     }
 
     rstatus = rocblas_destroy_handle(handle);

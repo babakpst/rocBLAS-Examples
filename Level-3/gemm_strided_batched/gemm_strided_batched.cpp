@@ -110,6 +110,19 @@ int main(int argc, char** argv)
     }
     hGold = hC;
 
+
+    const char * name =   " matrix A ";
+    for (int i = 0; i< batchCount; ++i)
+      helpers::printMatrix(name, hA.data()+i*strideA, M, K, lda); // bbk
+
+    name =   " matrix B ";
+    for (int i = 0; i< batchCount; ++i)
+      helpers::printMatrix(name, hB.data()+i*strideB, K, N, ldb); // bbk
+
+    name =   " matrix C ";
+    for (int i = 0; i< batchCount; ++i)
+      helpers::printMatrix(name, hC.data()+i*strideC, M, N, ldc); // bbk
+
     {
         // allocate memory on device
         helpers::DeviceVector<dataType> dA(totalSizeA);
@@ -170,8 +183,19 @@ int main(int argc, char** argv)
 
     } // release device memory via helpers::DeviceVector destructors
 
-    std::cout << "M, N, K, lda, ldb, ldc = " << M << ", " << N << ", " << K << ", " << lda << ", "
-              << ldb << ", " << ldc << std::endl;
+
+    name =   " results ";
+    for (int i = 0; i< batchCount; ++i)
+      helpers::printMatrix(name, hC.data()+i*strideC, M, N, ldc); // bbk
+
+
+
+    std::cout << "M, N, K, lda, ldb, ldc, nBatch = " << M << ", " << N << ", " << K << ", " << lda << ", "
+              << ldb << ", " << ldc << ", " << batchCount << std::endl;
+
+
+
+
 
     // calculate gold standard using CPU
     for(int i = 0; i < batchCount; i++)
