@@ -66,10 +66,28 @@ namespace helpers
     }
 
     template <typename T>
+    void printMatrix2(const char* name, T* A, rocblas_int m, rocblas_int n, rocblas_int lda)
+    {
+        printf("---------- %s ----------\n", name);
+        for(int i = 0; i < m; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                //printf("%f ", T(A[i + j * lda]));
+                printf("%f ", float(A[i + j * lda]));
+                //std::cout << T(A[i + j * lda]) << " " << std::endl;
+            }
+            printf("\n");
+            //std::cout << std::endl;
+        }
+    }
+
+
+    template <typename T>
     void fillVectorNormRand(std::vector<T>& arr, rocblas_int inc = 1)
     {
         // Initialize the array with a normal distributed random variable.
-
+        std::cout << " rand 1 \n";
         srand(int(time(NULL)));
         std::random_device          rd{};
         std::mt19937                gen{rd()};
@@ -109,6 +127,7 @@ namespace helpers
                                int> = 0>
     void fillVectorUniformIntRand(std::vector<T>& arr, rocblas_int inc = 1, int range = 3)
     {
+        std::cout << " rand 2 \n";
         srand(int(time(NULL)));
         std::random_device                 rd{};
         std::mt19937                       gen{rd()};
@@ -117,7 +136,8 @@ namespace helpers
 
         for(size_t i = 0; i < arr.size(); i += inc)
         {
-            int rval = distrib(gen);
+            //int rval = distrib(gen); // bbk 
+            int rval = 100; // bbk 
             arr[i]   = T((float)rval);
         }
     }
@@ -128,6 +148,7 @@ namespace helpers
                                int> = 0>
     void fillVectorUniformIntRand(std::vector<T>& arr, rocblas_int inc = 1, int range = 3)
     {
+        std::cout << " rand 3 \n";
         srand(int(time(NULL)));
         std::random_device                 rd{};
         std::mt19937                       gen{rd()};
@@ -145,6 +166,7 @@ namespace helpers
     template <typename T>
     void fillVectorUniformIntRand(std::vector<T>& arr, rocblas_int inc = 1, int range = 3)
     {
+        std::cout << " rand 4 \n";
         srand(int(time(NULL)));
         std::random_device                 rd{};
         std::mt19937                       gen{rd()};

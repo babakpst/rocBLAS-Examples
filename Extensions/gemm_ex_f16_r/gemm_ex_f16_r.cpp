@@ -28,8 +28,14 @@ THE SOFTWARE.
 #include <stdlib.h>
 #include <vector>
 
+// ./gemm_ex_f16_r --K 8 --M 8 --N 8 --alpha 0.001 --beta 1.0
+
+#define DEBUG 1
+
 int main(int argc, char** argv)
 {
+    std::cout << " This is Babak: \n";
+    
     helpers::ArgParser options("MNKab");
     // set defaults
     options.M     = 128;
@@ -60,7 +66,8 @@ int main(int argc, char** argv)
     float hAlpha = options.alpha; // Same datatype as compute_type
     float hBeta  = options.beta; // Same datatype as compute_type
 
-    const rocblas_operation transA = rocblas_operation_transpose;
+    //const rocblas_operation transA = rocblas_operation_transpose;
+    const rocblas_operation transA = rocblas_operation_none;
     const rocblas_operation transB = rocblas_operation_none;
 
     rocblas_int lda, ldb, ldc, ldd, sizeA, sizeB, sizeC, sizeD;
@@ -80,6 +87,9 @@ int main(int argc, char** argv)
         strideA1 = lda;
         strideA2 = 1;
     }
+    std::cout << " lda: " << lda << std::endl;
+    int NRA = lda,  NCA = sizeA/lda;
+
     if(transB == rocblas_operation_none)
     {
         ldb      = K;
@@ -94,10 +104,17 @@ int main(int argc, char** argv)
         strideB1 = ldb;
         strideB2 = 1;
     }
+    std::cout << " ldb: " << ldb << std::endl;
+    int NRB = ldb,  NCB = sizeB/ldb;
+
+
     ldc   = M;
     sizeC = N * ldc;
     ldd   = M;
     sizeD = N * ldd;
+    
+    std::cout << " ldc: " << ldc << std::endl;
+
 
     // using rocblas API
     rocblas_handle handle;
@@ -115,6 +132,21 @@ int main(int argc, char** argv)
     helpers::fillVectorUniformIntRand(hB, 1, 3);
     helpers::fillVectorUniformIntRand(hC, 1, 3);
     helpers::fillVectorUniformIntRand(hD, 1, 3);
+
+#ifdef DEBUG    
+    const char *name;
+    if (DEBUG){
+      name =   " matrix A ";
+      helpers::printMatrix2(name, hA.data(), NRA, NCA,lda); // bbk
+      name =   " matrix B ";
+      helpers::printMatrix2(name, hB.data(), NRB, NCB,ldb); // bbk
+      name =   " matrix C ";
+      helpers::printMatrix2(name, hC.data(), M,N,ldc); // bbk
+      name =   " matrix D ";
+      helpers::printMatrix2(name, hD.data(), M,N,ldd); // bbk    
+    }
+#endif
+
 
     hDGold = hD;
 
@@ -180,6 +212,13 @@ int main(int argc, char** argv)
 
     std::cout << "M, N, K, lda, ldb, ldc, ldd = " << M << ", " << N << ", " << K << ", " << lda
               << ", " << ldb << ", " << ldc << ", " << ldd << std::endl;
+
+#ifdef DEBUG    
+    if(DEBUG){
+    name =   " Answer D";
+    helpers::printMatrix2(name, hD.data(), M,N,ldc); // bbk
+    }
+#endif
 
     // calculate gold standard using CPU
     helpers::matMatMultMixPrec(hAlpha,

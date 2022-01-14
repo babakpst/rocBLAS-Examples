@@ -11,6 +11,11 @@ ifeq (,$(HIP_PATH))
 endif
 HIPCXX=$(HIP_PATH)/bin/hipcc
 
+# my build
+ROCBLAS_PATH=/home/bpoursar/WORKSPACE/rocBLAS-internal/build/release/rocblas-install/rocblas
+
+# installed
+#ROCBLAS_PATH=/home/bpoursar/WORKSPACE/rocBLAS/build/release/rocblas-install/rocblas
 ifeq (,$(ROCBLAS_PATH))
         ROCBLAS_PATH= $(wildcard /opt/rocm/rocblas)
 endif
